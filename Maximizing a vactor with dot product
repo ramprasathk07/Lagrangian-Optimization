@@ -1,0 +1,99 @@
+from sympy import *                             #importing sympy package for symbolic computation        
+import numpy as np                              #importing numpy package for numerical computation
+l=[]
+n=int(input("Enter the dimensions:"))           #entering the dimensions of the vector
+v=np.zeros(n)
+for j in range(n):
+    v[j]=int(input("Enter the coefficients for the input vector:")) #entering the coefficients of the vector
+    
+for j in range(n):                              #loop for entering the coefficients of the vector    
+    u=input("Enter the variables:")             #entering the variables of the vector    
+    l.append(symbols(u))                        #appending the variables to the list l
+l1=np.array(l)
+
+f = symbols('f', cls=Function)                  #defining the function f
+# print(l1[0])
+
+p=[i**2 for i in l]                             #squared the variables    
+c =np.sum(p)-1                                  #sum of the squared variables minus 1 
+v.reshape(1,-1)     
+f=np.array(v*l1)                                #multiplying the coefficients with the variables
+print("The Primary function is:\n",f,"\n")
+print("The constraint is:\n",c,"\n")
+
+Leq = symbols('Leq', cls=Function)              #defining the function Leq
+L=symbols('L')                                  #defining the variable L        
+Leq=np.sum(f)+L*(c)                             #defining the Lagrangian function           
+
+print("The Lagrangian equation is:\n",Leq,"\n") #printing the Lagrangian equation    
+l.append(L)
+
+q=[]
+for j in range(n+1):
+    d=diff(Leq,l[j])
+    q.append(d)                                 #differentiating the Lagrangian equation with respect to the variables and L
+q=Matrix(q)
+print("The Jaccobian Matrix:\n",q,"\n")
+
+t=solve(q)
+
+print("Solving for L,x,y values\n",t,"\n")
+H =hessian(Leq,l)                              #calculating the hessian matrix     
+print("The hessian Matrix:\n",H,"\n")
+h=np.array(H.subs(t[0]),dtype='float64')       #substituting the values of L,x,y in the hessian matrix       
+t1=[]   
+r={}
+for i in l:
+    temp=int(input("Enter the Starting values in order of variables list"))
+    r[i]=temp
+    t1.append([temp])                           #entering the starting values of the variables
+r.pop(L)
+
+t1=np.array(t1)
+t1.reshape(-1,1)                    
+# print(t1)
+r[L]=t[0].get(L)                                #substituting the value of L in the starting values
+print(r)
+
+for i in l:
+    i=symbols(str(i))
+
+J=np.array(q.subs(r),dtype='float64')           #substituting the values of L,x,y in the Jaccobian matrix
+var=np.zeros(n)                                         
+hinv=np.linalg.inv(h)                           #calculating the inverse of the hessian matrix
+b1=hinv@J                                       #multiplying the inverse of hessian matrix with the Jaccobian matrix
+# print(t1)
+i1=0
+while True:
+    i+=1
+    var=np.zeros(n) 
+    b1=hinv@J                                   #multiplying the inverse of hessian matrix with the Jaccobian matrix
+    var=t1-0.25*(b1)                            #calculating the new values of the variables
+    r={}
+    for i in range(len(l1)):                          
+        r[l1[i]]=var[i][0]                      #substituting the new values of the variables in the dictionary
+    i1+=1       
+    t1=np.array(t1)
+    t1.reshape(-1,1)
+    r[L]=t[0].get(L)
+#     print(r)
+    for m in l:
+        m=symbols(str(m))                       #converting the variables to symbols
+    
+    J=np.array(q.subs(r))
+    h=np.array(H.subs(r),dtype='float64')       #substituting the new values of the variables in the hessian matrix
+    hinv=np.linalg.inv(h)
+#     print("\nJ",J,"\n")
+#     print("\nh",h,"\n")
+
+    if abs(var[0]-t1[0]) <1*10**(-10):          #checking the condition for convergence
+        break
+    t1=var  
+var=var[:-1]                                    #removing the last element of the variable list
+print("The unit vector is\n",var,"\n")  
+print("The input vector is\n ",v,"\n")          
+m1=0
+for i in range(len(var)):
+    m1=m1+var[i]*v[i]                           #calculating the dot product of the unit vector and the input vector
+print("The maximum Iterations taken is:",i1)
+print("/nThe maximized dot product is",*m1)
